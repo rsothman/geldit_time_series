@@ -15,6 +15,7 @@ import org.apache.hadoop.mapred.jobcontrol.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.parquet.avro.AvroParquetOutputFormat;
+import org.apache.parquet.hadoop.mapred.DeprecatedParquetOutputFormat;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
 
@@ -112,11 +113,13 @@ public class GelditAnalytic extends Configured implements Tool{
 
 		if(outputtype.equals("parquet")){
 			job.setReducerClass(GelditParquetReducer.class);
-			job.setOutputFormat(AvroParquetOutputFormat.class);
+			job.setOutputFormat(DeprecatedParquetOutputFormat.class);
 			job.setOutputValueClass(GenericRecord.class);
-			AvroParquetOutputFormat.setSchema(job, SCHEMA);
-			AvroParquetOutputFormat.setOutputPath(jobctl, new Path(outputpath));
-			AvroParquetOutputFormat.setCompression(jobctl, CompressionCodecName.GZIP);
+			//AvroParquetOutputFormat.setSchema(job, SCHEMA);
+			//AvroParquetOutputFormat.setOutputPath(jobctl, new Path(outputpath));
+			DeprecatedParquetOutputFormat.setCompression(jobctl, CompressionCodecName.GZIP);
+			DeprecatedParquetOutputFormat.setOutputPath(jobctl, outputpath);
+			DeprecatedParquetOutputFormat.setAsOutputFormat(conf);
 		}else if(outputtype.equals("text")){
 			job.setReducerClass(GelditReducer.class);
 			job.setOutputFormatClass(TextOutputFormat.class);

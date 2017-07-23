@@ -5,18 +5,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.parquet.avro.AvroParquetWriter;
-import org.apache.parquet.hadoop.ParquetWriter;
-import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.apache.hadoop.util.Progressable;
+import org.apache.parquet.hadoop.mapred.DeprecatedParquetOutputFormat;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -26,7 +25,7 @@ import org.apache.avro.generic.GenericRecord;
 public class GelditParquetReducer extends MapReduceBase
 implements Reducer<CompositeWritable, IntWritable, Void, GenericRecord>{
 
-	private Map <String,ParquetWriter> writers;
+	private Map <String, RecordWriter> writers;
 	private static final Schema SCHEMA = new Schema.Parser().parse(
 			"{\n" +
 					"  \"type\": \"record\",\n" +
@@ -38,10 +37,11 @@ implements Reducer<CompositeWritable, IntWritable, Void, GenericRecord>{
 					"  ]\n" +
 			"}");
 	private JobConf conf;
+	Reporter reporterref;
 
 	public void configure(JobConf job) {
 		conf = job;
-		writers = new HashMap<String,ParquetWriter>();
+		writers = new HashMap<String,RecordWriter>();
 	}
 	/*
  	public void setup(Context context) throws IOException, InterruptedException{
@@ -56,25 +56,31 @@ implements Reducer<CompositeWritable, IntWritable, Void, GenericRecord>{
 
 
 		String outdir = conf.get("mapred.output.dir");
-		ParquetWriter writer;
+		reporterref = reporter;
+		RecordWriter writer;
 		if(writers.containsKey(key.getNkey().toString())){
 			writer = writers.get(key.getNkey().toString());
 		}else{
-			/*
-			 AvroParquetOutputFormat<GenericRecord> apwriter = 
-					new AvroParquetOutputFormat<GenericRecord>();
-			 */
+			FileSystem fs = FileSystem.get(conf);
+			DeprecatedParquetOutputFormat<GenericRecord> apwriter = 
+					new DeprecatedParquetOutputFormat<GenericRecord>();
 			Path outpath = new Path(outdir + 
 					"/country="+key.getNkey().toString()+"/part-" + 
 					conf.get("mapred.task.id") + ".parquet");
+			
+			  writer = apwriter.getRecordWriter(fs, conf, "country="+key.getNkey().toString()+
+					  "/part-" + conf.get("mapred.task.id"), 
+					  new Progressable() {
+					        public void progress() {
+					        	System.out.println("Doing Progress");
+					        	} 
+					        });
 			/*
-			  writer = apwriter.getRecordWriter(context.getConfiguration(), outpath,
-					CodecConfig.from(context).getCodec());
-			 */
 
-			writer = AvroParquetWriter.builder(outpath)
+			writer = (RecordWriter) DeprecatedParquetOutputFormat.builder(outpath)
 					.withCompressionCodec(CompressionCodecName.GZIP)
 					.withSchema(SCHEMA).build();
+			*/
 			writers.put(key.getNkey().toString(), writer);
 		}
 		int sum = 0;
@@ -85,12 +91,12 @@ implements Reducer<CompositeWritable, IntWritable, Void, GenericRecord>{
 		record.put("country", key.getNkey());
 		record.put("date", key.getNValue());
 		record.put("count", sum);
-		writer.write(record);
+		writer.write(null, record);
 
 	}
 	public void close() throws IOException{
-		for (Map.Entry<String,ParquetWriter> entry : writers.entrySet()){
-			entry.getValue().close();
+		for (Map.Entry<String,RecordWriter> entry : writers.entrySet()){
+			entry.getValue().close(reporterref);
 		}
 	}
 }
