@@ -9,10 +9,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.jobcontrol.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.parquet.avro.AvroParquetOutputFormat;
@@ -84,8 +83,58 @@ public class GelditAnalytic extends Configured implements Tool{
 
 	public static void main(String[] args) throws Exception
 	{
-		int exitCode = ToolRunner.run(new GelditAnalytic(), args);
-		System.exit(exitCode);
+		Schema SCHEMA = new Schema.Parser().parse(
+				"{\n" +
+						"  \"type\": \"record\",\n" +
+						"  \"name\": \"Line\",\n" +
+						"  \"fields\": [\n" +
+						"    {\"name\": \"country\", \"type\": \"string\"},\n" +
+						"    {\"name\": \"date\", \"type\": \"string\"},\n" +
+						"    {\"name\": \"count\", \"type\": \"long\"}\n" +
+						"  ]\n" +
+				"}");
+		Configuration conf = new Configuration();
+		String inputpath = args[0];
+		String outputpath = args[1];
+		String outputtype = args[2];
+		FileSystem fs = FileSystem.get(conf);
+		Job jobctl = new Job(conf);
+		JobConf job = new JobConf(GelditAnalytic.class); 
+		job.setJobName("GelditAnalyticParquet");
+		job.setMapperClass(GelditMapper.class);
+		job.setCombinerClass(GelditCompiner.class);
+		job.setMapOutputKeyClass(CompositeWritable.class);
+		job.setMapOutputValueClass(IntWritable.class);
+		job.setPartitionerClass(CompositePartitioner.class);
+		job.setOutputKeyClass(NullWritable.class);
+		
+		FileInputFormat.addInputPath(job, new Path(inputpath));
+
+		if(outputtype.equals("parquet")){
+			job.setReducerClass(GelditParquetReducer.class);
+			job.setOutputFormat(AvroParquetOutputFormat.class);
+			job.setOutputValueClass(GenericRecord.class);
+			AvroParquetOutputFormat.setSchema(job, SCHEMA);
+			AvroParquetOutputFormat.setOutputPath(jobctl, new Path(outputpath));
+			AvroParquetOutputFormat.setCompression(jobctl, CompressionCodecName.GZIP);
+		}else if(outputtype.equals("text")){
+			job.setReducerClass(GelditReducer.class);
+			job.setOutputFormatClass(TextOutputFormat.class);
+			job.setOutputValueClass(Text.class);
+			FileOutputFormat.setOutputPath(job, new Path(outputpath));
+		}
+		else {
+			System.err.println("Unsupported output format" + outputtype);
+			System.exit(5);
+		}
+
+		if(fs.exists(new Path(outputpath)))
+		{
+			fs.delete(new Path(outputpath), true);
+		}
+
+
+		
 	}
 
 }

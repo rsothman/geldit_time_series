@@ -1,18 +1,25 @@
 package main.java.geldit;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
 
-public class GelditCompiner extends 
-	Reducer<CompositeWritable, IntWritable, CompositeWritable, IntWritable>{
-	public void reduce(CompositeWritable key, Iterable<IntWritable> values, Context context)
-			throws IOException, InterruptedException{
+
+public class GelditCompiner extends MapReduceBase
+implements Reducer<CompositeWritable, IntWritable, CompositeWritable, IntWritable>{
+
+	public void reduce(CompositeWritable key, Iterator<IntWritable> values,
+			OutputCollector<CompositeWritable, IntWritable> output, Reporter reporter)
+					throws IOException{
 		int sum = 0;
-		for (IntWritable value: values){
-			sum += value.get();
+		while (values.hasNext()){
+			sum += values.next().get();
 		}
-		context.write(key, new IntWritable(sum));
+		output.collect(key, new IntWritable(sum));
 	}
 }
