@@ -5,3 +5,6 @@
 .git/
 dependency-reduced-pom.xml
 .classpath
+data.parquet
+.data.parquet.crc
+src/main/java/geldit/TestParquet.java
