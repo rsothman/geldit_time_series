@@ -20,12 +20,23 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.parquet.avro.AvroParquetOutputFormat;
 import org.apache.parquet.hadoop.mapred.DeprecatedParquetOutputFormat;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.MessageTypeParser;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.parquet.hadoop.ParquetOutputFormat;
+import org.apache.parquet.hadoop.example.GroupWriteSupport;
 
 
 public class GelditAnalytic {
 
 	public static void main(String[] args) throws Exception
 	{
+		MessageType schema = MessageTypeParser.parseMessageType(
+				"message group {\n" +
+						" required binary country (UTF8);\n" +
+						" required binary date (UTF8);\n" +
+						" required int64 count;\n" +
+				"}");
 		Configuration conf = new Configuration();
 		String inputpath = args[0];
 		String outputpath = args[1];
@@ -50,6 +61,13 @@ public class GelditAnalytic {
 		DeprecatedParquetOutputFormat.setCompression(conf, CompressionCodecName.GZIP);
 		DeprecatedParquetOutputFormat.setOutputPath(jobconf, new Path(outputpath));
 		DeprecatedParquetOutputFormat.setAsOutputFormat(jobconf);
+		GroupWriteSupport w = new GroupWriteSupport();
+		w.setSchema(schema, conf);
+		DeprecatedParquetOutputFormat.setWriteSupportClass(conf, w.getClass());
+		ParquetOutputFormat po = new ParquetOutputFormat(w);
+		conf.set("parquet.write.support.class", w.getClass().getName());
+		System.out.println("The value for parquet.write.support.class is " + conf.get("parquet.write.support.class"));
+		DeprecatedParquetOutputFormat.setOutputCompressorClass(jobconf, GzipCodec.class);
 
 		if(fs.exists(new Path(outputpath)))
 		{
