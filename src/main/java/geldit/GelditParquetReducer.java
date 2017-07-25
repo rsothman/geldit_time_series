@@ -47,7 +47,7 @@ implements Reducer<CompositeWritable, IntWritable, Void, Group>{
 			"message group {\n" +
 					" required binary country (UTF8);\n" +
 					" required binary date (UTF8);\n" +
-					" required int64 count;\n" +
+					" required binary count (UTF8);\n" +
 			"}");
 	private JobConf conf;
 	Reporter reporterref;
@@ -107,11 +107,12 @@ implements Reducer<CompositeWritable, IntWritable, Void, Group>{
 		while (values.hasNext()){
 			sum += values.next().get();
 		}
+
 		GroupFactory groupFactory = new SimpleGroupFactory(schema);
 		Group group = groupFactory.newGroup()
 				.append("country", key.getNkey().toString())
 				.append("date", key.getNValue().toString())
-				.append("count", sum);
+				.append("count", String.valueOf(sum));
 		/*
 		GenericRecord record = new GenericData.Record(SCHEMA);
 		record.put("country", key.getNkey());

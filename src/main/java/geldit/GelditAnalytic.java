@@ -35,7 +35,7 @@ public class GelditAnalytic {
 				"message group {\n" +
 						" required binary country (UTF8);\n" +
 						" required binary date (UTF8);\n" +
-						" required int64 count;\n" +
+						" required binary count (UTF8);\n" +
 				"}");
 		Configuration conf = new Configuration();
 		String inputpath = args[0];
@@ -61,11 +61,8 @@ public class GelditAnalytic {
 		DeprecatedParquetOutputFormat.setCompression(conf, CompressionCodecName.GZIP);
 		DeprecatedParquetOutputFormat.setOutputPath(jobconf, new Path(outputpath));
 		DeprecatedParquetOutputFormat.setAsOutputFormat(jobconf);
-		GroupWriteSupport w = new GroupWriteSupport();
-		w.setSchema(schema, conf);
-		DeprecatedParquetOutputFormat.setWriteSupportClass(conf, w.getClass());
-		ParquetOutputFormat po = new ParquetOutputFormat(w);
-		conf.set("parquet.write.support.class", w.getClass().getName());
+		DeprecatedParquetOutputFormat.setWriteSupportClass(jobconf, GroupWriteSupport.class);
+		jobconf.set("parquet.example.schema", schema.toString());
 		System.out.println("The value for parquet.write.support.class is " + conf.get("parquet.write.support.class"));
 		DeprecatedParquetOutputFormat.setOutputCompressorClass(jobconf, GzipCodec.class);
 
