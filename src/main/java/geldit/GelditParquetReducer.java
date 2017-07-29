@@ -26,8 +26,6 @@ public class GelditParquetReducer extends MapReduceBase
 implements Reducer<CompositeWritable, IntWritable, Void, Group>{
 
 	private Map <String, RecordWriter> writers;
-	private String outdir;
-	private String tip_id;
 	private JobConf conf;
 	Reporter reporterref;
 	MessageType schema = MessageTypeParser.parseMessageType(
@@ -41,8 +39,6 @@ implements Reducer<CompositeWritable, IntWritable, Void, Group>{
 	public void configure(JobConf job) {
 		conf = job;
 		writers = new HashMap<String,RecordWriter>();
-		outdir = conf.get("mapred.output.dir");
-		tip_id = conf.get("mapred.tip.id");
 	}
 
 	public void reduce(CompositeWritable key, Iterator<IntWritable> values,
@@ -62,8 +58,7 @@ implements Reducer<CompositeWritable, IntWritable, Void, Group>{
 					(DeprecatedParquetOutputFormat<Group>) conf.getOutputFormat();
 
 			writer = apwriter.getRecordWriter(fs, conf, "country="+key.getNkey().toString()+
-					"/part-" + tip_id.substring(tip_id.length()-10)
-					, new Progressable() {
+					"/part" , new Progressable() {
 				public void progress() {
 					System.out.println("Doing Progress");
 				} 
