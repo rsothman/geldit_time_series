@@ -1,4 +1,8 @@
-/target/
-.classpath
-.project
-.settings/
+mapreduce1/target/
+mapreduce1/.classpath
+mapreduce1/.project
+mapreduce1/.settings/
+mapreduce2/target/
+mapreduce2/.classpath
+mapreduce2/.project
+mapreduce2/.settings/
