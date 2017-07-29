@@ -49,21 +49,14 @@ public class GelditAnalytic {
 		jobconf.setMapOutputKeyClass(CompositeWritable.class);
 		jobconf.setMapOutputValueClass(IntWritable.class);
 		jobconf.setPartitionerClass(CompositePartitioner.class);
-		jobconf.setOutputKeyClass(NullWritable.class);
-
 		FileInputFormat.addInputPath(jobconf, new Path(inputpath));
-
 		jobconf.setReducerClass(GelditParquetReducer.class);
 		jobconf.setOutputFormat(DeprecatedParquetOutputFormat.class);
-		jobconf.setOutputValueClass(GenericRecord.class);
-		//AvroParquetOutputFormat.setSchema(job, SCHEMA);
-		//AvroParquetOutputFormat.setOutputPath(jobctl, new Path(outputpath));
 		DeprecatedParquetOutputFormat.setCompression(conf, CompressionCodecName.GZIP);
 		DeprecatedParquetOutputFormat.setOutputPath(jobconf, new Path(outputpath));
 		DeprecatedParquetOutputFormat.setAsOutputFormat(jobconf);
 		DeprecatedParquetOutputFormat.setWriteSupportClass(jobconf, GroupWriteSupport.class);
 		jobconf.set("parquet.example.schema", schema.toString());
-		System.out.println("The value for parquet.write.support.class is " + conf.get("parquet.write.support.class"));
 		DeprecatedParquetOutputFormat.setOutputCompressorClass(jobconf, GzipCodec.class);
 
 		if(fs.exists(new Path(outputpath)))
