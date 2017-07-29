@@ -45,10 +45,6 @@ Reducer<CompositeWritable, IntWritable, Void, GenericRecord>{
 		if(writers.containsKey(key.getNkey().toString())){
 			writer = writers.get(key.getNkey().toString());
 		}else{
-			/*
-			 AvroParquetOutputFormat<GenericRecord> apwriter = 
-					new AvroParquetOutputFormat<GenericRecord>();
-			 */
 			Path outpath = new Path(outdir + 
 					"/country="+key.getNkey().toString()+"/part-" + 
 					context.getTaskAttemptID().getId() + ".parquet");

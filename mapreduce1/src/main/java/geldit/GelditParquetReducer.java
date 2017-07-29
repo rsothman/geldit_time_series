@@ -44,10 +44,6 @@ implements Reducer<CompositeWritable, IntWritable, Void, Group>{
 	public void reduce(CompositeWritable key, Iterator<IntWritable> values,
 			OutputCollector<Void, Group> output,
 			Reporter reporter) throws IOException{
-
-
-
-
 		reporterref = reporter;
 		RecordWriter writer;
 		if(writers.containsKey(key.getNkey().toString())){
