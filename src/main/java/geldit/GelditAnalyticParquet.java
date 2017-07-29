@@ -6,7 +6,6 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
@@ -33,22 +32,16 @@ public class GelditAnalyticParquet extends Configured implements Tool{
 		String inputpath = args[0];
 		String outputpath = args[1];
 		FileSystem fs = FileSystem.get(conf);
-
 		Job job = new Job(conf);
 		job.setJarByClass(GelditAnalytic.class);
-
 		job.setMapperClass(GelditMapper.class);
 		job.setReducerClass(GelditParquetReducer.class);
 		job.setCombinerClass(GelditCompiner.class);
-
 		job.setMapOutputKeyClass(CompositeWritable.class);
 		job.setMapOutputValueClass(IntWritable.class);
 		job.setSortComparatorClass(CompositeComparator.class);
 		job.setGroupingComparatorClass(CompositeComparator.class);
 		job.setPartitionerClass(CompositePartitioner.class);
-
-		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(NullWritable.class);
 		job.setOutputFormatClass(AvroParquetOutputFormat.class);
 		AvroParquetOutputFormat.setSchema(job, SCHEMA);
 		AvroParquetOutputFormat.setOutputPath(job, new Path(outputpath));

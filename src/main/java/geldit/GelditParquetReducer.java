@@ -21,7 +21,7 @@ import org.apache.avro.generic.GenericRecord;
 /* Parquet Reducer is running. but still under testing and more development */
 
 public class GelditParquetReducer extends 
-	Reducer<CompositeWritable, IntWritable, Void, GenericRecord>{
+Reducer<CompositeWritable, IntWritable, Void, GenericRecord>{
 	private Map <String,ParquetWriter> writers;
 	private static final Schema SCHEMA = new Schema.Parser().parse(
 			"{\n" +
@@ -48,19 +48,15 @@ public class GelditParquetReducer extends
 			/*
 			 AvroParquetOutputFormat<GenericRecord> apwriter = 
 					new AvroParquetOutputFormat<GenericRecord>();
-			*/
+			 */
 			Path outpath = new Path(outdir + 
 					"/country="+key.getNkey().toString()+"/part-" + 
 					context.getTaskAttemptID().getId() + ".parquet");
-			/*
-			  writer = apwriter.getRecordWriter(context.getConfiguration(), outpath,
-					CodecConfig.from(context).getCodec());
-			*/
 
-                        writer = AvroParquetWriter.builder(outpath)
-                        		.withCompressionCodec(CompressionCodecName.GZIP)
-                        		.withSchema(SCHEMA).build();
-                        writers.putIfAbsent(key.getNkey().toString(), writer);
+			writer = AvroParquetWriter.builder(outpath)
+					.withCompressionCodec(CompressionCodecName.GZIP)
+					.withSchema(SCHEMA).build();
+			writers.putIfAbsent(key.getNkey().toString(), writer);
 		}
 		int sum = 0;
 		for (IntWritable value: values){

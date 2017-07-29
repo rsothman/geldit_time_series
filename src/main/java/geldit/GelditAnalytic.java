@@ -1,7 +1,6 @@
 package main.java.geldit;
 
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -49,15 +48,12 @@ public class GelditAnalytic extends Configured implements Tool{
 		job.setSortComparatorClass(CompositeComparator.class);
 		job.setGroupingComparatorClass(CompositeComparator.class);
 		job.setPartitionerClass(CompositePartitioner.class);
-
 		job.setOutputKeyClass(NullWritable.class);
-		
 		FileInputFormat.addInputPath(job, new Path(inputpath));
 
 		if(outputtype.equals("parquet")){
 			job.setReducerClass(GelditParquetReducer.class);
 			job.setOutputFormatClass(AvroParquetOutputFormat.class);
-			job.setOutputValueClass(GenericRecord.class);
 			AvroParquetOutputFormat.setSchema(job, SCHEMA);
 			AvroParquetOutputFormat.setOutputPath(job, new Path(outputpath));
 			AvroParquetOutputFormat.setCompression(job, CompressionCodecName.GZIP);
